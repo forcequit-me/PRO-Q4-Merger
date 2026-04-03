@@ -71,10 +71,12 @@ header{
 /* ── Main Layout ── */
 main{
   flex:1;display:flex;flex-direction:column;overflow:hidden;
-  padding:12px;gap:10px;
+  padding:12px;gap:0;
 }
+/* ── EQ Wrap ── */
+.eq-wrap{flex:1;display:flex;flex-direction:column;min-height:180px;overflow:hidden;margin-bottom:0}
 /* ── EQ Section ── */
-.eq-section{flex:1;min-height:200px;display:flex;flex-direction:column;position:relative}
+.eq-section{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
 .tab-bar{
   display:none;gap:2px;padding:0 4px;
   background:var(--bg-mid);border-radius:var(--radius) var(--radius) 0 0;
@@ -109,14 +111,17 @@ canvas{display:block;width:100%;height:100%}
 .canvas-tooltip.visible{opacity:1}
 .canvas-tooltip .tt-label{color:var(--text-muted);margin-right:4px}
 .canvas-tooltip .tt-value{font-family:var(--mono);font-size:10px}
-/* ── Band Editor ── */
+/* ── Band Editor (dedicated fixed-height slot) ── */
 .band-editor{
+  height:155px;flex-shrink:0;
   background:var(--bg-panel);border-radius:var(--radius);
   border:1px solid var(--border);
-  max-height:0;overflow:hidden;transition:max-height 0.35s ease, padding 0.35s ease;
-  flex-shrink:0;
+  padding:14px 18px;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.2s ease;
 }
-.band-editor.open{max-height:260px;padding:14px 18px}
+.band-editor.open{opacity:1;pointer-events:auto}
 .editor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .editor-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
 .editor-title .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -164,22 +169,45 @@ canvas{display:block;width:100%;height:100%}
   background:#fff;transition:transform 0.2s;
 }
 .param-toggle.on::after{transform:translateX(16px)}
+/* ── Resize Handles ── */
+.resize-v{
+  height:8px;flex-shrink:0;cursor:ns-resize;
+  display:flex;align-items:center;justify-content:center;
+  margin:2px 0;
+}
+.resize-v::after{
+  content:'';width:44px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,0.08);transition:background 0.2s;
+}
+.resize-v:hover::after,.resize-v.dragging::after{background:var(--accent)}
+.resize-h{
+  width:8px;flex-shrink:0;cursor:ew-resize;
+  display:flex;align-items:center;justify-content:center;
+}
+.resize-h::after{
+  content:'';height:44px;width:3px;border-radius:2px;
+  background:rgba(255,255,255,0.08);transition:background 0.2s;
+}
+.resize-h:hover::after,.resize-h.dragging::after{background:var(--accent)}
 /* ── Bottom Panels ── */
 .bottom-panels{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  flex-shrink:0;
+  display:flex;flex-direction:row;gap:0;
+  flex-shrink:0;min-height:150px;height:200px;
+}
+.bottom-panels .panel{
+  display:flex;flex-direction:column;flex:1;min-width:160px;overflow:hidden;
 }
 .panel{
   background:var(--bg-panel);border-radius:var(--radius);
   border:1px solid var(--border);padding:14px;
 }
-.panel-title{
+.panel-title{flex-shrink:0;
   font-size:12px;font-weight:600;text-transform:uppercase;
-  letter-spacing:0.8px;color:var(--text-muted);margin-bottom:10px;
+  letter-spacing:0.8px;color:var(--text-muted);margin-bottom:8px;
   display:flex;align-items:center;justify-content:space-between;
 }
 /* ── Preset Slots ── */
-.preset-slots{display:flex;flex-direction:column;gap:6px;max-height:140px;overflow-y:auto;padding-right:4px}
+.preset-slots{display:grid;grid-template-columns:1fr 1fr;gap:5px;overflow-y:auto;flex:1;padding:2px 0;align-content:start}
 .preset-slot{
   display:flex;align-items:center;gap:8px;padding:8px 10px;
   background:var(--bg-deep);border-radius:var(--radius-sm);
@@ -229,14 +257,28 @@ canvas{display:block;width:100%;height:100%}
   border-radius:var(--radius-sm);cursor:pointer;
 }
 .output-select:focus{border-color:var(--accent);outline:none}
-.merge-modes{display:flex;gap:6px;flex:1}
+.merge-modes{display:flex;gap:5px;flex:1}
 .merge-mode-btn{
-  flex:1;padding:6px;font-size:11px;font-weight:500;
+  flex:1;padding:7px 4px;font-size:11px;font-weight:600;
   border-radius:var(--radius-sm);border:1px solid var(--border);
   background:var(--bg-deep);color:var(--text-muted);cursor:pointer;
-  transition:all 0.2s;text-align:center;
+  transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;
 }
-.merge-mode-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.merge-mode-btn .mode-icon{font-size:14px;line-height:1}
+.merge-mode-btn.active[data-mode="standard"]{
+  border-color:var(--accent);color:var(--accent);background:var(--accent-dim);
+}
+.merge-mode-btn.active[data-mode="smart"]{
+  border-color:var(--cyan);color:var(--cyan);
+  background:rgba(6,182,212,0.08);
+  box-shadow:0 0 10px rgba(6,182,212,0.15);
+}
+@keyframes smartPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.merge-mode-btn.active[data-mode="smart"] .mode-icon{animation:smartPulse 2s ease-in-out infinite}
+.mode-desc{
+  font-size:10px;color:var(--text-dim);margin:5px 0 6px;
+  min-height:14px;transition:opacity 0.2s;font-family:var(--mono);
+}
 .band-summary{
   font-size:11px;color:var(--text-muted);margin:8px 0;
   font-family:var(--mono);
@@ -343,24 +385,28 @@ canvas{display:block;width:100%;height:100%}
 </header>
 
 <main>
-  <section class="eq-section">
-    <div class="tab-bar" id="tabBar"></div>
-    <div class="canvas-wrap">
-      <canvas id="eqCanvas"></canvas>
-      <div class="canvas-tooltip" id="tooltip"></div>
-    </div>
-  </section>
+  <div class="eq-wrap" id="eqWrap">
+    <section class="eq-section">
+      <div class="tab-bar" id="tabBar"></div>
+      <div class="canvas-wrap">
+        <canvas id="eqCanvas"></canvas>
+        <div class="canvas-tooltip" id="tooltip"></div>
+      </div>
+    </section>
 
-  <section class="band-editor" id="bandEditor">
-    <div class="editor-header">
-      <div class="editor-title"><span class="dot" id="editorDot"></span><span id="editorLabel">Band</span></div>
-      <button class="editor-close" id="editorClose">&times;</button>
-    </div>
-    <div class="editor-grid" id="editorGrid"></div>
-  </section>
+    <section class="band-editor" id="bandEditor">
+      <div class="editor-header">
+        <div class="editor-title"><span class="dot" id="editorDot"></span><span id="editorLabel">Band</span></div>
+        <button class="editor-close" id="editorClose">&times;</button>
+      </div>
+      <div class="editor-grid" id="editorGrid"></div>
+    </section>
+  </div>
 
-  <section class="bottom-panels">
-    <div class="panel">
+  <div class="resize-v" id="resizeV" title="Drag to resize"></div>
+
+  <section class="bottom-panels" id="bottomPanels">
+    <div class="panel" id="panelPresets">
       <div class="panel-title">
         <span>Input Presets</span>
         <div class="slot-actions">
@@ -369,7 +415,8 @@ canvas{display:block;width:100%;height:100%}
       </div>
       <div class="preset-slots" id="presetSlots"></div>
     </div>
-    <div class="panel">
+    <div class="resize-h" id="resizeH" title="Drag to resize"></div>
+    <div class="panel" id="panelOutput">
       <div class="panel-title"><span>Merge Output</span></div>
       <div class="output-row">
         <label>Name</label>
@@ -394,10 +441,11 @@ canvas{display:block;width:100%;height:100%}
       <div class="output-row">
         <label>Mode</label>
         <div class="merge-modes">
-          <button class="merge-mode-btn active" data-mode="standard">Standard</button>
-          <button class="merge-mode-btn" data-mode="smart">Smart</button>
+          <button class="merge-mode-btn active" data-mode="standard"><span class="mode-icon">⧫</span>Standard</button>
+          <button class="merge-mode-btn" data-mode="smart"><span class="mode-icon">✦</span>Smart</button>
         </div>
       </div>
+      <div class="mode-desc" id="modeDesc">Stacks all selected bands by frequency</div>
       <div class="band-summary" id="bandSummary">No bands loaded</div>
       <button class="merge-btn" id="mergeBtn" disabled>Merge &amp; Download</button>
     </div>
@@ -1468,11 +1516,17 @@ class App {
     });
 
     // Merge mode
+    const MODE_DESCS = {
+      standard: 'Stacks all selected bands by frequency',
+      smart: 'Detects nearby bands — suggests combining them'
+    };
     document.querySelectorAll('.merge-mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.merge-mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.mergeMode = btn.dataset.mode;
+        const desc = document.getElementById('modeDesc');
+        if (desc) desc.textContent = MODE_DESCS[btn.dataset.mode] || '';
       });
     });
 
@@ -2118,6 +2172,57 @@ document.addEventListener('drop', e => {
     if (slotIdx >= state.slotCount) state.slotCount = slotIdx + 1;
   }
 });
+
+// ── Resize Handles ──
+(function() {
+  // Vertical: EQ wrap vs bottom panels
+  const resizeV = document.getElementById('resizeV');
+  const eqWrap  = document.getElementById('eqWrap');
+  const botPanels = document.getElementById('bottomPanels');
+  let vDrag = false, vY0, vEqH0, vBotH0;
+  resizeV.addEventListener('mousedown', e => {
+    vDrag = true; vY0 = e.clientY;
+    vEqH0 = eqWrap.getBoundingClientRect().height;
+    vBotH0 = botPanels.getBoundingClientRect().height;
+    resizeV.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  // Horizontal: presets vs output
+  const resizeH   = document.getElementById('resizeH');
+  const panelPre  = document.getElementById('panelPresets');
+  let hDrag = false, hX0, hPreW0;
+  resizeH.addEventListener('mousedown', e => {
+    hDrag = true; hX0 = e.clientX;
+    hPreW0 = panelPre.getBoundingClientRect().width;
+    resizeH.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (vDrag) {
+      const dy = e.clientY - vY0;
+      const newEqH = Math.max(150, vEqH0 + dy);
+      const newBotH = Math.max(130, vBotH0 - dy);
+      eqWrap.style.flex = 'none';
+      eqWrap.style.height = newEqH + 'px';
+      botPanels.style.height = newBotH + 'px';
+      botPanels.style.flexShrink = '0';
+      if (app) app.eqCanvas._resize();
+    }
+    if (hDrag) {
+      const dx = e.clientX - hX0;
+      const newW = Math.max(180, hPreW0 + dx);
+      panelPre.style.flex = 'none';
+      panelPre.style.width = newW + 'px';
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (vDrag) { vDrag = false; resizeV.classList.remove('dragging'); }
+    if (hDrag) { hDrag = false; resizeH.classList.remove('dragging'); }
+  });
+})();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 </body>
