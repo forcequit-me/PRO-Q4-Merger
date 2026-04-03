@@ -261,7 +261,7 @@ canvas{display:block;width:100%;height:100%}
 /* ── Bottom Panels ── */
 .bottom-panels{
   display:flex;flex-direction:row;gap:0;flex-wrap:wrap;
-  flex-shrink:0;min-height:160px;height:180px;
+  flex-shrink:0;min-height:180px;height:240px;
 }
 .bottom-panels .panel{
   display:flex;flex-direction:column;flex:1;min-width:220px;overflow-y:auto;overflow-x:hidden;
@@ -331,8 +331,15 @@ canvas{display:block;width:100%;height:100%}
 .slot-actions button:hover{border-color:var(--accent);color:var(--accent)}
 .slot-actions button.add-btn{color:var(--accent);border-color:var(--accent-dim)}
 /* ── Output Panel ── */
-.output-fields{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-.output-row-group{display:flex;gap:12px}
+#panelOutput{display:flex;flex-direction:column}
+#panelOutput .output-fields{flex-shrink:0}
+#panelOutput .output-row{flex-shrink:0}
+#panelOutput .mode-desc{flex-shrink:0}
+#panelOutput .band-summary{flex-shrink:0}
+#panelOutput .preview-btn{flex-shrink:0;margin-top:auto}
+#panelOutput .download-btn{flex-shrink:0}
+.output-fields{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.output-row-group{display:flex;gap:8px}
 .output-field{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
 .output-field label{font-size:10px;color:var(--text-muted);width:45px;flex-shrink:0}
 .output-input{
@@ -347,32 +354,41 @@ canvas{display:block;width:100%;height:100%}
   border-radius:var(--radius-sm);cursor:pointer;
 }
 .output-select:focus{border-color:var(--accent);outline:none}
-.output-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.output-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .output-row label{font-size:10px;color:var(--text-muted);width:45px;flex-shrink:0}
-.merge-modes{display:flex;gap:5px;flex:1}
-.merge-mode-btn{
-  flex:1;padding:7px 4px;font-size:11px;font-weight:600;
-  border-radius:var(--radius-sm);border:1px solid var(--border);
-  background:var(--bg-deep);color:var(--text-muted);cursor:pointer;
-  transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;
+.mode-toggle-btn{
+  flex:1;position:relative;display:flex;align-items:center;
+  height:28px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--bg-deep);
+  cursor:pointer;padding:0;overflow:hidden;
 }
-.merge-mode-btn .mode-icon{font-size:14px;line-height:1}
-.merge-mode-btn.active[data-mode="standard"]{
-  border-color:var(--accent);color:var(--accent);background:var(--accent-dim);
+.mode-toggle-label{
+  flex:1;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:11px;font-weight:600;color:var(--text-dim);
+  transition:color 0.25s;pointer-events:none;
 }
-.merge-mode-btn.active[data-mode="smart"]{
-  border-color:var(--cyan);color:var(--cyan);
-  background:rgba(6,182,212,0.08);
-  box-shadow:0 0 10px rgba(6,182,212,0.15);
+.mode-toggle-label .mode-icon{font-size:13px;line-height:1}
+.mode-toggle-thumb{
+  position:absolute;top:2px;left:2px;width:calc(50% - 2px);height:calc(100% - 4px);
+  border-radius:calc(var(--radius-sm) - 2px);
+  background:var(--accent-dim);border:1px solid var(--accent);
+  transition:left 0.25s ease, background 0.25s, border-color 0.25s;
+  pointer-events:none;
+}
+.mode-toggle-btn[data-mode="standard"] .mode-toggle-label[data-for="standard"]{color:var(--accent)}
+.mode-toggle-btn[data-mode="smart"] .mode-toggle-label[data-for="smart"]{color:var(--cyan)}
+.mode-toggle-btn[data-mode="smart"] .mode-toggle-thumb{
+  left:calc(50% + 0px);
+  background:rgba(6,182,212,0.08);border-color:var(--cyan);
 }
 @keyframes smartPulse{0%,100%{opacity:1}50%{opacity:0.55}}
-.merge-mode-btn.active[data-mode="smart"] .mode-icon{animation:smartPulse 2s ease-in-out infinite}
+.mode-toggle-btn[data-mode="smart"] .mode-toggle-label[data-for="smart"] .mode-icon{animation:smartPulse 2s ease-in-out infinite}
 .mode-desc{
-  font-size:10px;color:var(--text-dim);margin:5px 0 6px;
+  font-size:10px;color:var(--text-dim);margin:3px 0 4px;
   min-height:14px;transition:opacity 0.2s;font-family:var(--mono);
 }
 .band-summary{
-  font-size:11px;color:var(--text-muted);margin:8px 0;
+  font-size:11px;color:var(--text-muted);margin:4px 0;
   font-family:var(--mono);
 }
 .band-summary .warn{color:var(--orange)}
@@ -568,12 +584,13 @@ canvas{display:block;width:100%;height:100%}
           </div>
         </div>
       </div>
-      <div class="output-row">
+      <div class="output-field">
         <label>Mode</label>
-        <div class="merge-modes">
-          <button class="merge-mode-btn active" data-mode="standard"><span class="mode-icon">⧫</span>Standard</button>
-          <button class="merge-mode-btn" data-mode="smart"><span class="mode-icon">✦</span>Smart</button>
-        </div>
+        <button class="mode-toggle-btn" id="modeToggle" data-mode="standard">
+          <span class="mode-toggle-label" data-for="standard"><span class="mode-icon">⧫</span>Standard</span>
+          <span class="mode-toggle-label" data-for="smart"><span class="mode-icon">✦</span>Smart</span>
+          <span class="mode-toggle-thumb"></span>
+        </button>
       </div>
       <div class="mode-desc" id="modeDesc">Stacks all selected bands by frequency</div>
       <div class="band-summary" id="bandSummary">No bands loaded</div>
@@ -1797,14 +1814,13 @@ class App {
       standard: 'Stacks all selected bands by frequency',
       smart: 'Detects nearby bands — suggests combining them'
     };
-    document.querySelectorAll('.merge-mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.merge-mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.mergeMode = btn.dataset.mode;
-        const desc = document.getElementById('modeDesc');
-        if (desc) desc.textContent = MODE_DESCS[btn.dataset.mode] || '';
-      });
+    document.getElementById('modeToggle').addEventListener('click', () => {
+      const btn = document.getElementById('modeToggle');
+      const next = btn.dataset.mode === 'standard' ? 'smart' : 'standard';
+      btn.dataset.mode = next;
+      state.mergeMode = next;
+      const desc = document.getElementById('modeDesc');
+      if (desc) desc.textContent = MODE_DESCS[next] || '';
     });
 
     // About
