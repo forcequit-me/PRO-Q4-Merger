@@ -78,20 +78,87 @@ main{
 /* ── EQ Section ── */
 .eq-section{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
 .tab-bar{
-  display:none;gap:2px;padding:0 4px;
+  display:none;gap:4px;padding:4px 6px;
   background:var(--bg-mid);border-radius:var(--radius) var(--radius) 0 0;
   border:1px solid var(--border);border-bottom:none;
+  align-items:stretch;
 }
 .tab-bar.visible{display:flex}
 .tab-btn{
-  padding:7px 16px;font-size:12px;font-weight:500;
+  display:flex;flex-direction:column;gap:3px;
+  padding:6px 12px 5px;font-size:12px;font-weight:500;
   background:none;border:none;border-bottom:2px solid transparent;
   color:var(--text-muted);cursor:pointer;transition:all 0.2s;
-  white-space:nowrap;
+  white-space:nowrap;border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  position:relative;
 }
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
-.tab-btn.merged-tab{color:var(--accent);font-weight:600}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,0.03)}
+.tab-btn.active{color:var(--text);background:rgba(255,255,255,0.04)}
+.tab-btn.merged-tab{
+  color:var(--accent);font-weight:600;
+  align-self:center;padding:6px 14px;
+  border-bottom:2px solid transparent;
+}
+.tab-btn.merged-tab.active{border-bottom-color:var(--accent)}
+/* Tab blend row */
+.tab-blend-row{
+  display:flex;align-items:center;gap:5px;
+  pointer-events:auto;
+}
+.tab-blend-slider{
+  width:60px;-webkit-appearance:none;appearance:none;
+  height:3px;border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(to right, var(--tab-color,#ffca1f) var(--blend-pct,100%), rgba(255,255,255,0.08) var(--blend-pct,100%));
+}
+.tab-blend-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:9px;height:9px;border-radius:50%;
+  background:var(--tab-color,#ffca1f);cursor:pointer;
+  border:1.5px solid var(--bg-panel);box-shadow:0 0 4px var(--tab-color,#ffca1f);
+}
+.tab-blend-val{font-size:9px;font-family:var(--mono);color:var(--text-dim);min-width:24px}
+/* ── Merge Blend Panel ── */
+.merge-blend-panel{
+  display:none;align-items:center;gap:0;
+  background:var(--bg-mid);border:1px solid var(--border);border-top:none;
+  border-bottom:none;padding:0 12px;flex-shrink:0;
+  overflow-x:auto;overflow-y:hidden;
+}
+.merge-blend-panel.visible{display:flex}
+.mbp-section{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px 7px 0;
+  flex-shrink:0;
+}
+.mbp-section+.mbp-section{
+  border-left:1px solid var(--border);padding-left:12px;
+}
+.mbp-label{
+  font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.5px;color:var(--text-dim);flex-shrink:0;white-space:nowrap;
+}
+.mbp-slider{
+  width:72px;-webkit-appearance:none;appearance:none;
+  height:3px;border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(to right, var(--mbp-color,#ffca1f) var(--blend-pct,100%), rgba(255,255,255,0.08) var(--blend-pct,100%));
+  flex-shrink:0;
+}
+.mbp-slider.global-slider{width:88px;--mbp-color:#ffca1f}
+.mbp-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:10px;height:10px;border-radius:50%;
+  background:var(--mbp-color,#ffca1f);cursor:pointer;
+  border:1.5px solid var(--bg-panel);box-shadow:0 0 5px var(--mbp-color,#ffca1f);
+}
+.mbp-val{font-size:9px;font-family:var(--mono);color:var(--text-muted);min-width:26px;text-align:right}
+.mbp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px currentColor}
+.mbp-name{font-size:11px;font-weight:500;color:var(--text-muted);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-toggle-btn{
+  width:16px;height:16px;border-radius:4px;background:none;border:1px solid transparent;
+  color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;flex-shrink:0;
+}
+.preset-toggle-btn:hover{color:var(--text-muted);background:rgba(255,255,255,0.05)}
+.preset-toggle-btn.is-active{color:var(--accent)}
+.preset-toggle-btn svg{width:10px;height:10px;fill:currentColor}
 .canvas-wrap{
   flex:1;position:relative;
   background:var(--bg-deep);
@@ -99,6 +166,8 @@ main{
   overflow:hidden;
 }
 .tab-bar.visible+.canvas-wrap{border-radius:0 var(--radius) var(--radius) var(--radius)}
+.tab-bar.visible+.merge-blend-panel+.canvas-wrap,
+.merge-blend-panel.visible+.canvas-wrap{border-radius:0 var(--radius) var(--radius) var(--radius)}
 canvas{display:block;width:100%;height:100%}
 .canvas-tooltip{
   position:absolute;pointer-events:none;
@@ -191,15 +260,15 @@ canvas{display:block;width:100%;height:100%}
 .resize-h:hover::after,.resize-h.dragging::after{background:var(--accent)}
 /* ── Bottom Panels ── */
 .bottom-panels{
-  display:flex;flex-direction:row;gap:0;
-  flex-shrink:0;min-height:150px;height:200px;
+  display:flex;flex-direction:row;gap:0;flex-wrap:wrap;
+  flex-shrink:0;min-height:160px;height:180px;
 }
 .bottom-panels .panel{
-  display:flex;flex-direction:column;flex:1;min-width:160px;overflow:hidden;
+  display:flex;flex-direction:column;flex:1;min-width:220px;overflow-y:auto;overflow-x:hidden;
 }
 .panel{
   background:var(--bg-panel);border-radius:var(--radius);
-  border:1px solid var(--border);padding:14px;
+  border:1px solid var(--border);padding:10px 14px;
 }
 .panel-title{flex-shrink:0;
   font-size:12px;font-weight:600;text-transform:uppercase;
@@ -262,20 +331,24 @@ canvas{display:block;width:100%;height:100%}
 .slot-actions button:hover{border-color:var(--accent);color:var(--accent)}
 .slot-actions button.add-btn{color:var(--accent);border-color:var(--accent-dim)}
 /* ── Output Panel ── */
-.output-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.output-row label{font-size:11px;color:var(--text-muted);min-width:50px;flex-shrink:0}
+.output-fields{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.output-row-group{display:flex;gap:12px}
+.output-field{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.output-field label{font-size:10px;color:var(--text-muted);width:45px;flex-shrink:0}
 .output-input{
-  flex:1;padding:6px 10px;font-size:12px;
+  flex:1;padding:5px 8px;font-size:11px;min-width:0;
   background:var(--bg-deep);border:1px solid var(--border);
   border-radius:var(--radius-sm);
 }
 .output-input:focus{border-color:var(--accent);outline:none}
 .output-select{
-  flex:1;padding:6px 10px;font-size:12px;
+  flex:1;padding:5px 8px;font-size:11px;min-width:0;
   background:var(--bg-deep);border:1px solid var(--border);
   border-radius:var(--radius-sm);cursor:pointer;
 }
 .output-select:focus{border-color:var(--accent);outline:none}
+.output-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.output-row label{font-size:10px;color:var(--text-muted);width:45px;flex-shrink:0}
 .merge-modes{display:flex;gap:5px;flex:1}
 .merge-mode-btn{
   flex:1;padding:7px 4px;font-size:11px;font-weight:600;
@@ -303,15 +376,6 @@ canvas{display:block;width:100%;height:100%}
   font-family:var(--mono);
 }
 .band-summary .warn{color:var(--orange)}
-.merge-btn{
-  width:100%;padding:10px;font-size:13px;font-weight:600;
-  background:var(--accent);color:#111;border:none;
-  border-radius:var(--radius-sm);cursor:pointer;
-  transition:all 0.2s;letter-spacing:0.3px;
-}
-.merge-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,202,31,0.3)}
-.merge-btn:active{transform:translateY(0)}
-.merge-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;filter:none}
 /* ── About Modal ── */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,0.7);
@@ -368,7 +432,7 @@ canvas{display:block;width:100%;height:100%}
 .cf-combine{background:var(--accent);border:none;color:#111}
 .cf-skip{background:none;border:1px solid var(--border);color:var(--text-dim)}
 /* ── Toast ── */
-.toast-container{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:6px}
+.toast-container{position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:6px}
 .toast{
   padding:10px 16px;border-radius:var(--radius-sm);
   font-size:12px;font-weight:500;
@@ -380,6 +444,38 @@ canvas{display:block;width:100%;height:100%}
 .toast.error{border-left:3px solid var(--red)}
 .toast.info{border-left:3px solid var(--blue)}
 @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+/* ── Undo / Redo Buttons ── */
+.history-controls{display:flex;gap:2px;margin-right:8px}
+.history-btn{
+  width:30px;height:30px;border-radius:var(--radius-sm);
+  background:var(--bg-deep);border:1px solid var(--border);
+  color:var(--text-muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.history-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.history-btn:disabled{opacity:0.25;cursor:not-allowed}
+.history-btn svg{width:14px;height:14px}
+/* ── Preview Button & Download ── */
+.preview-btn{
+  width:100%;padding:8px;font-size:12px;font-weight:600;
+  background:transparent;color:var(--accent);
+  border:1px solid var(--accent);border-radius:var(--radius-sm);
+  cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+  margin-bottom:4px;
+}
+.preview-btn:hover{background:var(--accent-dim)}
+.preview-btn:disabled{opacity:0.4;cursor:not-allowed}
+.download-btn{
+  width:100%;padding:10px;font-size:13px;font-weight:600;
+  background:var(--accent);color:#111;border:none;
+  border-radius:var(--radius-sm);cursor:pointer;
+  transition:all 0.2s;letter-spacing:0.3px;
+  display:none;
+}
+.download-btn.visible{display:block}
+.download-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,202,31,0.3)}
+.download-btn:active{transform:translateY(0)}
 /* ── Responsive ── */
 @media(max-width:768px){
   .bottom-panels{grid-template-columns:1fr}
@@ -395,6 +491,14 @@ canvas{display:block;width:100%;height:100%}
     <div class="logo-text"><span>Pro-Q4</span> Preset Merger</div>
   </div>
   <div class="header-controls">
+    <div class="history-controls">
+      <button class="history-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+      <button class="history-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+      </button>
+    </div>
     <div class="view-toggle">
       <button class="active" data-view="overlay">Overlay</button>
       <button data-view="tabs">Tabs</button>
@@ -407,6 +511,7 @@ canvas{display:block;width:100%;height:100%}
   <div class="eq-wrap" id="eqWrap">
     <section class="eq-section">
       <div class="tab-bar" id="tabBar"></div>
+      <div class="merge-blend-panel" id="mergeBlendPanel"></div>
       <div class="canvas-wrap">
         <canvas id="eqCanvas"></canvas>
         <div class="canvas-tooltip" id="tooltip"></div>
@@ -437,25 +542,31 @@ canvas{display:block;width:100%;height:100%}
     <div class="resize-h" id="resizeH" title="Drag to resize"></div>
     <div class="panel" id="panelOutput">
       <div class="panel-title"><span>Merge Output</span></div>
-      <div class="output-row">
-        <label>Name</label>
-        <input class="output-input" id="outputName" type="text" placeholder="Merged Preset" value="Merged Preset">
-      </div>
-      <div class="output-row">
-        <label>Author</label>
-        <input class="output-input" id="outputAuthor" type="text" placeholder="(optional)">
-      </div>
-      <div class="output-row">
-        <label>Globals</label>
-        <select class="output-select" id="globalsSelect"><option value="-1">— Load presets first —</option></select>
-      </div>
-      <div class="output-row">
-        <label>Character</label>
-        <select class="output-select" id="characterSelect">
-          <option value="0">Off</option>
-          <option value="1">Subtle</option>
-          <option value="2">Warm</option>
-        </select>
+      <div class="output-fields">
+        <div class="output-row-group">
+          <div class="output-field">
+            <label>Name</label>
+            <input class="output-input" id="outputName" type="text" placeholder="Merged Preset" value="Merged Preset">
+          </div>
+          <div class="output-field">
+            <label>Author</label>
+            <input class="output-input" id="outputAuthor" type="text" placeholder="(optional)">
+          </div>
+        </div>
+        <div class="output-row-group">
+          <div class="output-field">
+            <label>Globals</label>
+            <select class="output-select" id="globalsSelect"><option value="-1">— Load presets first —</option></select>
+          </div>
+          <div class="output-field">
+            <label>Character</label>
+            <select class="output-select" id="characterSelect">
+              <option value="0">Off</option>
+              <option value="1">Subtle</option>
+              <option value="2">Warm</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="output-row">
         <label>Mode</label>
@@ -466,7 +577,8 @@ canvas{display:block;width:100%;height:100%}
       </div>
       <div class="mode-desc" id="modeDesc">Stacks all selected bands by frequency</div>
       <div class="band-summary" id="bandSummary">No bands loaded</div>
-      <button class="merge-btn" id="mergeBtn" disabled>Merge &amp; Download</button>
+      <button class="preview-btn" id="previewBtn" disabled>Preview Merge</button>
+      <button class="download-btn" id="downloadBtn">Download Preset(s)</button>
     </div>
   </section>
 </main>
@@ -483,7 +595,10 @@ canvas{display:block;width:100%;height:100%}
       <li>Click band dots on the EQ display to select/deselect bands for merging</li>
       <li>Use the <strong>Overlay</strong> view to see all presets at once, or <strong>Tabs</strong> to view individually</li>
       <li>Edit any band by clicking its dot — adjust frequency, gain, Q, shape, and more</li>
-      <li>Choose merge mode, configure output name, and click <strong>Merge &amp; Download</strong></li>
+      <li>Adjust individual preset mix levels and use toggle switches to enable/disable presets</li>
+      <li>Choose merge mode, configure output name, and click <strong>Preview Merge</strong> to see the result</li>
+      <li>Review the white dashed preview curve, then click <strong>Download Preset(s)</strong> to export</li>
+      <li>Use <strong>Undo/Redo</strong> arrows (or <code>Ctrl+Z</code> / <code>Ctrl+Shift+Z</code>) to step through changes</li>
     </ul>
     <h3>Pro-Q 3 vs Pro-Q 4 Format</h3>
     <p>Pro-Q 3 uses a binary format (signature <code>FQ3p</code>, ~1348 bytes) which is not directly compatible. Pro-Q 4 uses a text-based INI format (signature <code>FQ4p</code>). If you have Pro-Q 3 presets, open them in Pro-Q 4 and re-save to convert.</p>
@@ -508,7 +623,7 @@ canvas{display:block;width:100%;height:100%}
     <div id="conflictList"></div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
       <button class="cf-keep" id="smartCancel" style="padding:8px 18px">Cancel</button>
-      <button class="cf-combine" id="smartConfirm" style="padding:8px 18px">Apply &amp; Merge</button>
+      <button class="cf-combine" id="smartConfirm" style="padding:8px 18px">Apply &amp; Preview</button>
     </div>
   </div>
 </div>
@@ -952,11 +1067,79 @@ const FilterMath = {
 };
 
 // ════════════════════════════════════════════
+// HISTORY MANAGER (Undo / Redo)
+// ════════════════════════════════════════════
+const HistoryManager = (() => {
+  const MAX = 50;
+  let undoStack = [];
+  let redoStack = [];
+  let _paused = false;
+
+  function _snapshot() {
+    return JSON.parse(JSON.stringify({
+      presets: state.presets,
+      blends: state.blends,
+      enables: state.enables,
+      globalBlend: state.globalBlend,
+      selectedBand: state.selectedBand,
+      mergeMode: state.mergeMode,
+      mergedPreview: state.mergedPreview,
+    }));
+  }
+
+  function _restore(snap) {
+    state.presets = snap.presets;
+    state.blends = snap.blends;
+    state.enables = snap.enables;
+    state.globalBlend = snap.globalBlend;
+    state.selectedBand = snap.selectedBand;
+    state.mergeMode = snap.mergeMode;
+    state.mergedPreview = snap.mergedPreview;
+  }
+
+  return {
+    push() {
+      if (_paused) return;
+      undoStack.push(_snapshot());
+      if (undoStack.length > MAX) undoStack.shift();
+      redoStack = [];
+      this.updateButtons();
+    },
+    undo() {
+      if (!undoStack.length) return;
+      redoStack.push(_snapshot());
+      _restore(undoStack.pop());
+      this.updateButtons();
+      if (app) app._onPresetsChanged();
+    },
+    redo() {
+      if (!redoStack.length) return;
+      undoStack.push(_snapshot());
+      _restore(redoStack.pop());
+      this.updateButtons();
+      if (app) app._onPresetsChanged();
+    },
+    updateButtons() {
+      const u = document.getElementById('undoBtn');
+      const r = document.getElementById('redoBtn');
+      if (u) u.disabled = !undoStack.length;
+      if (r) r.disabled = !redoStack.length;
+    },
+    pause() { _paused = true; },
+    resume() { _paused = false; },
+    canUndo() { return undoStack.length > 0; },
+    canRedo() { return redoStack.length > 0; },
+  };
+})();
+
+// ════════════════════════════════════════════
 // APP STATE
 // ════════════════════════════════════════════
 const state = {
   presets: [],
   blends: [], // per-preset blend 0.0–1.0
+  enables: [], // per-preset enable/disable bool
+  globalBlend: 1.0, // master mix (Merged tab)
   slotCount: 2,
   viewMode: 'overlay', // 'overlay' | 'tabs'
   activeTab: 0,
@@ -966,6 +1149,7 @@ const state = {
   outputName: 'Merged Preset',
   outputAuthor: '',
   globalsSource: -1,
+  mergedPreview: null, // preview bands for canvas rendering
 };
 
 // ════════════════════════════════════════════
@@ -1081,6 +1265,7 @@ class EQCanvas {
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const dot = this._findNearestDot(mx, my);
     if (!dot) return;
+    HistoryManager.push();
     this._drag = {
       dot,
       startX: e.clientX,
@@ -1164,6 +1349,7 @@ class EQCanvas {
     const dot = this._findNearestDot(mx, my);
     if (!dot) return;
     e.preventDefault();
+    HistoryManager.push();
     const band = dot.band;
     const down = e.deltaY > 0;
     if (e.shiftKey) {
@@ -1213,6 +1399,7 @@ class EQCanvas {
     this._drawGrid(ctx);
     this._drawCurves(ctx);
     this._drawDots(ctx);
+    this._drawPreview(ctx);
   }
 
   // Auto-scale gain range to fit loaded bands (Pro-Q 4 style)
@@ -1223,9 +1410,14 @@ class EQCanvas {
       for (const b of p.bands) {
         if (b.used || b.selected) {
           maxAbsGain = Math.max(maxAbsGain, Math.abs(b.gain));
-          // Also account for dynamic range and shelf overshoot
           if (b.dynamicRange) maxAbsGain = Math.max(maxAbsGain, Math.abs(b.gain) + b.dynamicRange * 0.5);
         }
+      }
+    }
+    // Account for preview bands
+    if (state.mergedPreview) {
+      for (const b of state.mergedPreview) {
+        maxAbsGain = Math.max(maxAbsGain, Math.abs(b.gain));
       }
     }
     // Find the smallest step that fits all bands with padding
@@ -1317,7 +1509,11 @@ class EQCanvas {
     // ── Phase 1: Draw individual band response curves (translucent fills) ──
     for (const { preset, idx } of visiblePresets) {
       const presetColor = preset.color || PRESET_COLORS[idx % PRESET_COLORS.length];
-      const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
+      const gb = state.globalBlend !== undefined ? state.globalBlend : 1.0;
+      const enabled = state.enables[idx] !== false;
+      const effectiveBlend = enabled ? (state.blends[idx] !== undefined ? state.blends[idx] : 1.0) * gb : 0;
+
+      if (effectiveBlend === 0) continue;
 
       for (let bi = 0; bi < preset.bands.length; bi++) {
         const b = preset.bands[bi];
@@ -1325,13 +1521,13 @@ class EQCanvas {
         if (!b.enabled && b.used) continue; // bypassed bands not drawn
 
         // Scale response by blend for visual representation
-        const response = freqPoints.map(f => FilterMath.bandResponse(f, b) * blend);
+        const response = freqPoints.map(f => FilterMath.bandResponse(f, b) * effectiveBlend);
         const hasSignal = response.some(r => Math.abs(r) > 0.05);
-        if (!hasSignal && blend > 0.02) continue;
+        if (!hasSignal && effectiveBlend > 0.02) continue;
 
         const isActive = b.used || b.selected;
-        const fillAlpha = (isActive ? 0.22 : 0.08) * blend;
-        const strokeAlpha = (isActive ? 0.5 : 0.15) * blend;
+        const fillAlpha = (isActive ? 0.22 : 0.08) * effectiveBlend;
+        const strokeAlpha = (isActive ? 0.5 : 0.15) * effectiveBlend;
 
         // Parse color to get rgba values
         const fillColor = this._hexToRgba(presetColor, fillAlpha);
@@ -1366,18 +1562,23 @@ class EQCanvas {
     // ── Phase 2: Draw composite response per preset (colored stroke, blend-scaled) ──
     for (const { preset, idx } of visiblePresets) {
       const color = preset.color || PRESET_COLORS[idx % PRESET_COLORS.length];
-      const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
+      const gb = state.globalBlend !== undefined ? state.globalBlend : 1.0;
+      const enabled = state.enables[idx] !== false;
+      const effectiveBlend = enabled ? (state.blends[idx] !== undefined ? state.blends[idx] : 1.0) * gb : 0;
+
+      if (effectiveBlend === 0) continue;
+
       const activeBands = preset.bands.filter(b => (b.used || b.selected) && b.enabled);
       if (!activeBands.length) continue;
 
-      const composite = freqPoints.map(f => FilterMath.compositeResponse(f, activeBands) * blend);
+      const composite = freqPoints.map(f => FilterMath.compositeResponse(f, activeBands) * effectiveBlend);
 
       ctx.save();
       ctx.shadowColor = color;
-      ctx.shadowBlur = 5 * blend;
+      ctx.shadowBlur = 5 * effectiveBlend;
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.3 + 0.7 * blend;
+      ctx.globalAlpha = 0.3 + 0.7 * effectiveBlend;
       ctx.beginPath();
       for (let i = 0; i <= numPoints; i++) {
         const x = this._freqToX(freqPoints[i]);
@@ -1388,15 +1589,18 @@ class EQCanvas {
       ctx.restore();
     }
 
-    // ── Phase 3: Draw overall composite (gold line) when multiple presets — blend-weighted ──
+    // ── Phase 3: Draw overall composite (gold line) — blend + globalBlend weighted ──
     if (visiblePresets.length > 1) {
+      const gb = state.globalBlend !== undefined ? state.globalBlend : 1.0;
       const totalComposite = freqPoints.map(f => {
         let sum = 0;
         for (const { preset, idx } of visiblePresets) {
-          const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
+          const enabled = state.enables[idx] !== false;
+          if (!enabled) continue;
+          const effectiveBlend = (state.blends[idx] !== undefined ? state.blends[idx] : 1.0) * gb;
           for (const b of preset.bands) {
             if ((b.used || b.selected) && b.enabled) {
-              sum += FilterMath.bandResponse(f, b) * blend;
+              sum += FilterMath.bandResponse(f, b) * effectiveBlend;
             }
           }
         }
@@ -1423,6 +1627,7 @@ class EQCanvas {
 
     // ── Phase 4: Collect band dot positions ──
     for (const { preset, idx } of visiblePresets) {
+      if (state.enables[idx] === false) continue;
       const color = preset.color || PRESET_COLORS[idx % PRESET_COLORS.length];
       for (let bi = 0; bi < preset.bands.length; bi++) {
         const b = preset.bands[bi];
@@ -1503,6 +1708,48 @@ class EQCanvas {
     }
   }
 
+  _drawPreview(ctx) {
+    if (!state.mergedPreview || !state.mergedPreview.length) return;
+
+    const numPoints = 800;
+    const freqPoints = [];
+    const logMin = Math.log10(FREQ_MIN), logMax = Math.log10(FREQ_MAX);
+    for (let i = 0; i <= numPoints; i++) {
+      freqPoints.push(Math.pow(10, logMin + (i / numPoints) * (logMax - logMin)));
+    }
+
+    // Composite response of all preview bands
+    const activeBands = state.mergedPreview.filter(b => b.used || b.selected || FFP.isNonDefault(b));
+    if (!activeBands.length) return;
+
+    const composite = freqPoints.map(f => FilterMath.compositeResponse(f, activeBands));
+
+    // Draw bright white dashed line
+    ctx.save();
+    ctx.setLineDash([8, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+    ctx.shadowBlur = 6;
+
+    ctx.beginPath();
+    for (let i = 0; i <= numPoints; i++) {
+      const x = this._freqToX(freqPoints[i]);
+      const y = this._gainToY(Math.max(this.gainMin, Math.min(this.gainMax, composite[i])));
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Label "Preview"
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+    ctx.font = 'bold 11px Outfit';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.textAlign = 'left';
+    ctx.fillText('Preview', this.padding.left + 8, this.padding.top + 16);
+    ctx.restore();
+  }
+
   _getVisiblePresets() {
     if (state.viewMode === 'overlay') {
       return state.presets.map((p, i) => ({ preset: p, idx: i }));
@@ -1578,7 +1825,7 @@ class App {
     document.getElementById('smartConfirm').addEventListener('click', () => {
       this._applySmartResolutions();
       document.getElementById('smartOverlay').classList.remove('visible');
-      this._doMerge();
+      this._buildPreview();
     });
 
     // Add slot
@@ -1602,8 +1849,27 @@ class App {
       state.outputAuthor = e.target.value;
     });
 
-    // Merge button
-    document.getElementById('mergeBtn').addEventListener('click', () => this.merge());
+    // Preview & Download buttons
+    document.getElementById('previewBtn').addEventListener('click', () => this.previewMerge());
+    document.getElementById('downloadBtn').addEventListener('click', () => this.downloadMerge());
+
+    // Undo / Redo buttons
+    document.getElementById('undoBtn').addEventListener('click', () => HistoryManager.undo());
+    document.getElementById('redoBtn').addEventListener('click', () => HistoryManager.redo());
+
+    // Keyboard shortcuts: Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        HistoryManager.undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        HistoryManager.redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        HistoryManager.redo();
+      }
+    });
 
     // Initial render
     this._renderSlots();
@@ -1618,9 +1884,10 @@ class App {
       slot.className = 'preset-slot' + (state.presets[i] ? ' has-file' : '');
       const color = PRESET_COLORS[i % PRESET_COLORS.length];
       const preset = state.presets[i];
-      // Ensure blend exists
       if (state.blends[i] === undefined) state.blends[i] = 1.0;
+      if (state.enables[i] === undefined) state.enables[i] = true;
       const blend = state.blends[i];
+      const enabled = state.enables[i];
 
       if (preset) {
         slot.innerHTML = `
@@ -1633,11 +1900,14 @@ class App {
             <button class="slot-remove" data-idx="${i}" title="Remove">&times;</button>
           </div>
           <div class="blend-row">
+            <button class="preset-toggle-btn ${enabled ? 'is-active' : ''}" data-toggle="${i}" title="Toggle Preset">
+              <svg viewBox="0 0 10 10"><path d="M5 1v4M2 3a4 4 0 106 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+            </button>
             <span class="blend-label">Mix</span>
             <input type="range" class="blend-slider" min="0" max="1" step="0.01"
               value="${blend}"
               style="--slot-color:${color};--blend-pct:${blend * 100}%"
-              data-idx="${i}">
+              data-idx="${i}" ${!enabled ? 'disabled' : ''}>
             <span class="blend-value" data-blend-display="${i}">${Math.round(blend * 100)}%</span>
           </div>
         `;
@@ -1665,9 +1935,18 @@ class App {
         slot.style.cursor = 'pointer';
       }
 
-      // Blend slider
+      // Blend slider & Toggle
       const blendSlider = slot.querySelector('.blend-slider');
-      if (blendSlider) {
+      const toggleBtn = slot.querySelector('.preset-toggle-btn');
+      if (blendSlider && toggleBtn) {
+        toggleBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          HistoryManager.push();
+          const idx = parseInt(e.currentTarget.dataset.toggle);
+          state.enables[idx] = !state.enables[idx];
+          state.mergedPreview = null; this._updateDownloadBtn();
+          this._onPresetsChanged(); // Full re-render needed to sync tab bar and merge panel
+        });
         blendSlider.addEventListener('input', e => {
           e.stopPropagation();
           const idx = parseInt(e.target.dataset.idx);
@@ -1679,16 +1958,19 @@ class App {
           this.eqCanvas.render();
           this.updateBandSummary();
         });
+        blendSlider.addEventListener('mousedown', e => { e.stopPropagation(); HistoryManager.push(); });
         blendSlider.addEventListener('click', e => e.stopPropagation());
-        blendSlider.addEventListener('mousedown', e => e.stopPropagation());
       }
 
       // Remove button
       slot.querySelector('.slot-remove')?.addEventListener('click', e => {
         e.stopPropagation();
+        HistoryManager.push();
         const idx = parseInt(e.currentTarget.dataset.idx);
         state.presets.splice(idx, 1);
         state.blends.splice(idx, 1);
+        state.enables.splice(idx, 1);
+        state.mergedPreview = null; this._updateDownloadBtn();
         state.slotCount = Math.max(state.slotCount, 2);
         if (state.slotCount > state.presets.length && state.slotCount > 2) {
           state.slotCount = Math.max(state.presets.length + 1, 2);
@@ -1717,12 +1999,16 @@ class App {
       return;
     }
     try {
+      HistoryManager.push();
       const text = await file.text();
       const preset = FFP.parse(text, file.name);
       preset.color = PRESET_COLORS[slotIdx % PRESET_COLORS.length];
       // Mark presetIndex on each band
       preset.bands.forEach(b => { b.presetIndex = slotIdx; });
       state.presets[slotIdx] = preset;
+      // Clear preview when presets change
+      state.mergedPreview = null;
+      this._updateDownloadBtn();
       // Auto-add slot if needed
       if (slotIdx >= state.slotCount - 1 && state.slotCount < 10) {
         state.slotCount = Math.max(state.slotCount, slotIdx + 2);
@@ -1738,9 +2024,16 @@ class App {
     this._renderSlots();
     this._updateGlobalsSelect();
     this._updateTabBar();
+    this._updateMergeBlendPanel();
     this.updateBandSummary();
     this.eqCanvas.render();
-    document.getElementById('mergeBtn').disabled = !state.presets.filter(Boolean).length;
+    document.getElementById('previewBtn').disabled = !state.presets.filter(Boolean).length;
+    this._updateDownloadBtn();
+  }
+
+  _updateDownloadBtn() {
+    const btn = document.getElementById('downloadBtn');
+    btn.classList.toggle('visible', !!state.mergedPreview);
   }
 
   _updateGlobalsSelect() {
@@ -1789,19 +2082,212 @@ class App {
     bar.innerHTML = '';
     state.presets.filter(Boolean).forEach((p, i) => {
       const realIdx = state.presets.indexOf(p);
+      const color = p.color || PRESET_COLORS[realIdx % PRESET_COLORS.length];
+      if (state.blends[realIdx] === undefined) state.blends[realIdx] = 1.0;
+      if (state.enables[realIdx] === undefined) state.enables[realIdx] = true;
+      const blend = state.blends[realIdx];
+      const enabled = state.enables[realIdx];
+      const isActive = state.activeTab === realIdx;
+
       const btn = document.createElement('button');
-      btn.className = 'tab-btn' + (state.activeTab === realIdx ? ' active' : '');
-      btn.textContent = p.name;
-      btn.style.borderBottomColor = state.activeTab === realIdx ? p.color : 'transparent';
-      btn.addEventListener('click', () => { state.activeTab = realIdx; this._updateTabBar(); this.eqCanvas.render(); });
+      btn.className = 'tab-btn' + (isActive ? ' active' : '');
+      btn.style.borderBottomColor = isActive ? color : 'transparent';
+      btn.style.color = isActive ? '#e8e8ef' : '';
+      if (!enabled) btn.style.opacity = '0.5';
+
+      // Name row
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = p.name;
+      nameSpan.style.maxWidth = '120px';
+      nameSpan.style.overflow = 'hidden';
+      nameSpan.style.textOverflow = 'ellipsis';
+      btn.appendChild(nameSpan);
+
+      // Blend row
+      const blendRow = document.createElement('div');
+      blendRow.className = 'tab-blend-row';
+      blendRow.innerHTML = `
+        <button class="preset-toggle-btn ${enabled ? 'is-active' : ''}" data-toggle="${realIdx}" title="Toggle Preset">
+          <svg viewBox="0 0 10 10"><path d="M5 1v4M2 3a4 4 0 106 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        </button>
+        <input type="range" class="tab-blend-slider" min="0" max="1" step="0.01"
+          value="${blend}"
+          style="--tab-color:${color};--blend-pct:${blend * 100}%"
+          title="Mix: ${Math.round(blend * 100)}%"
+          data-idx="${realIdx}" ${!enabled ? 'disabled' : ''}>
+        <span class="tab-blend-val">${Math.round(blend * 100)}%</span>
+      `;
+      btn.appendChild(blendRow);
+
+      // Tab click (only on name, not slider)
+      nameSpan.addEventListener('click', () => {
+        state.activeTab = realIdx;
+        this._updateTabBar();
+        this.eqCanvas.render();
+      });
+      btn.addEventListener('click', e => {
+        if (e.target.closest('.tab-blend-row')) return;
+        state.activeTab = realIdx;
+        this._updateTabBar();
+        this.eqCanvas.render();
+      });
+
+      // Blend slider & toggle events
+      const slider = blendRow.querySelector('.tab-blend-slider');
+      const valSpan = blendRow.querySelector('.tab-blend-val');
+      const toggleBtn = blendRow.querySelector('.preset-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          HistoryManager.push();
+          const idx = parseInt(e.currentTarget.dataset.toggle);
+          state.enables[idx] = !state.enables[idx];
+          state.mergedPreview = null; this._updateDownloadBtn();
+          this._onPresetsChanged();
+        });
+      }
+      slider.addEventListener('mousedown', e => { e.stopPropagation(); HistoryManager.push(); });
+      slider.addEventListener('input', e => {
+        e.stopPropagation();
+        const v = parseFloat(slider.value);
+        state.blends[realIdx] = v;
+        slider.style.setProperty('--blend-pct', (v * 100) + '%');
+        valSpan.textContent = Math.round(v * 100) + '%';
+        slider.title = `Mix: ${Math.round(v * 100)}%`;
+        this.eqCanvas.render();
+        this.updateBandSummary();
+        // Also sync with the preset slot slider if visible
+        const slotSlider = document.querySelector(`.blend-slider[data-idx="${realIdx}"]`);
+        if (slotSlider) {
+          slotSlider.value = v;
+          slotSlider.style.setProperty('--blend-pct', (v * 100) + '%');
+          const slotDisplay = document.querySelector(`[data-blend-display="${realIdx}"]`);
+          if (slotDisplay) slotDisplay.textContent = Math.round(v * 100) + '%';
+        }
+      });
+      slider.addEventListener('mousedown', e => e.stopPropagation());
+      slider.addEventListener('click', e => e.stopPropagation());
+
       bar.appendChild(btn);
     });
-    // Merged tab
+
+    // Merged/Preview tab
     const merged = document.createElement('button');
     merged.className = 'tab-btn merged-tab' + (state.activeTab === -1 ? ' active' : '');
-    merged.textContent = 'Merged';
-    merged.addEventListener('click', () => { state.activeTab = -1; this._updateTabBar(); this.eqCanvas.render(); });
+    merged.textContent = state.mergedPreview ? 'Preview' : 'Merged';
+    merged.addEventListener('click', () => {
+      state.activeTab = -1;
+      this._updateTabBar();
+      this._updateMergeBlendPanel();
+      this.eqCanvas.render();
+    });
     bar.appendChild(merged);
+
+    // Show/hide the merge blend panel
+    this._updateMergeBlendPanel();
+  }
+
+  _updateMergeBlendPanel() {
+    const panel = document.getElementById('mergeBlendPanel');
+    if (!panel) return;
+    const show = state.viewMode === 'tabs' && state.activeTab === -1;
+    panel.classList.toggle('visible', show);
+    if (!show) return;
+
+    panel.innerHTML = '';
+    const loaded = state.presets.filter(Boolean);
+    if (!loaded.length) return;
+
+    // — Global Mix section —
+    const gb = state.globalBlend !== undefined ? state.globalBlend : 1.0;
+    const globalSec = document.createElement('div');
+    globalSec.className = 'mbp-section';
+    globalSec.innerHTML = `
+      <span class="mbp-label">Global</span>
+      <input type="range" class="mbp-slider global-slider" min="0" max="1" step="0.01"
+        value="${gb}" style="--blend-pct:${gb * 100}%" id="mbpGlobalSlider">
+      <span class="mbp-val" id="mbpGlobalVal">${Math.round(gb * 100)}%</span>
+    `;
+    panel.appendChild(globalSec);
+
+    const globalSlider = globalSec.querySelector('#mbpGlobalSlider');
+    const globalVal = globalSec.querySelector('#mbpGlobalVal');
+    globalSlider.addEventListener('input', () => {
+      const v = parseFloat(globalSlider.value);
+      state.globalBlend = v;
+      globalSlider.style.setProperty('--blend-pct', (v * 100) + '%');
+      globalVal.textContent = Math.round(v * 100) + '%';
+      this.eqCanvas.render();
+    });
+
+    // — Per-preset sections —
+    for (const p of loaded) {
+      const realIdx = state.presets.indexOf(p);
+      const color = p.color || PRESET_COLORS[realIdx % PRESET_COLORS.length];
+      if (state.blends[realIdx] === undefined) state.blends[realIdx] = 1.0;
+      if (state.enables[realIdx] === undefined) state.enables[realIdx] = true;
+      const blend = state.blends[realIdx];
+      const enabled = state.enables[realIdx];
+
+      const sec = document.createElement('div');
+      sec.className = 'mbp-section';
+      if (!enabled) sec.style.opacity = '0.5';
+      sec.innerHTML = `
+        <button class="preset-toggle-btn ${enabled ? 'is-active' : ''}" data-toggle="${realIdx}" title="Toggle Preset">
+          <svg viewBox="0 0 10 10"><path d="M5 1v4M2 3a4 4 0 106 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        </button>
+        <span class="mbp-dot" style="color:${color};background:${color}"></span>
+        <span class="mbp-name" title="${p.name}">${p.name}</span>
+        <input type="range" class="mbp-slider" min="0" max="1" step="0.01"
+          value="${blend}"
+          style="--mbp-color:${color};--blend-pct:${blend * 100}%"
+          data-midx="${realIdx}" ${!enabled ? 'disabled' : ''}>
+        <span class="mbp-val" data-mbp-val="${realIdx}">${Math.round(blend * 100)}%</span>
+      `;
+      panel.appendChild(sec);
+
+      const slider = sec.querySelector('.mbp-slider');
+      const valEl = sec.querySelector(`[data-mbp-val="${realIdx}"]`);
+      const toggleBtn = sec.querySelector('.preset-toggle-btn');
+      
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          HistoryManager.push();
+          const idx = parseInt(e.currentTarget.dataset.toggle);
+          state.enables[idx] = !state.enables[idx];
+          state.mergedPreview = null; this._updateDownloadBtn();
+          this._onPresetsChanged();
+        });
+      }
+
+      slider.addEventListener('mousedown', () => { HistoryManager.push(); });
+      slider.addEventListener('input', () => {
+        const v = parseFloat(slider.value);
+        state.blends[realIdx] = v;
+        slider.style.setProperty('--blend-pct', (v * 100) + '%');
+        valEl.textContent = Math.round(v * 100) + '%';
+        this.eqCanvas.render();
+        this.updateBandSummary();
+        // Sync tab slider
+        const tabSlider = document.querySelector(`.tab-blend-slider[data-idx="${realIdx}"]`) ||
+          document.querySelectorAll('.tab-blend-slider')[state.presets.filter(Boolean).indexOf(p)];
+        if (tabSlider) {
+          tabSlider.value = v;
+          tabSlider.style.setProperty('--blend-pct', (v * 100) + '%');
+          const tabVal = tabSlider.closest('.tab-blend-row')?.querySelector('.tab-blend-val');
+          if (tabVal) tabVal.textContent = Math.round(v * 100) + '%';
+        }
+        // Sync slot slider
+        const slotSlider = document.querySelector(`.blend-slider[data-idx="${realIdx}"]`);
+        if (slotSlider) {
+          slotSlider.value = v;
+          slotSlider.style.setProperty('--blend-pct', (v * 100) + '%');
+          const slotDisplay = document.querySelector(`[data-blend-display="${realIdx}"]`);
+          if (slotDisplay) slotDisplay.textContent = Math.round(v * 100) + '%';
+        }
+      });
+    }
   }
 
   updateBandSummary() {
@@ -1863,12 +2349,14 @@ class App {
         input.type = 'text';
         input.className = 'param-input';
         input.value = opts.display ? opts.display(opts.get()) : opts.get().toFixed(2);
+        slider.addEventListener('mousedown', () => { HistoryManager.push(); });
         slider.addEventListener('input', () => {
           const v = parseFloat(slider.value);
           opts.set(v);
           input.value = opts.display ? opts.display(v) : v.toFixed(2);
           this.eqCanvas.render();
         });
+        input.addEventListener('focus', () => { HistoryManager.push(); });
         input.addEventListener('change', () => {
           let v = parseFloat(input.value);
           if (opts.parse) v = opts.parse(input.value);
@@ -2027,8 +2515,8 @@ class App {
     document.getElementById('bandEditor').classList.remove('open');
   }
 
-  // ── Merge ──
-  merge() {
+  // ── Preview & Download Merge ──
+  previewMerge() {
     const selectedBands = this._getSelectedBands();
     if (!selectedBands.length) {
       this.toast('No bands selected for merging', 'error');
@@ -2047,7 +2535,20 @@ class App {
       }
     }
 
-    this._doMerge();
+    this._buildPreview();
+  }
+
+  downloadMerge() {
+    if (!state.mergedPreview) {
+      this.toast('No preview to download — click Preview first', 'error');
+      return;
+    }
+    this._doDownload();
+  }
+
+  merge() {
+    // Legacy / smart dialog path
+    this.previewMerge();
   }
 
   _detectConflicts(bands) {
@@ -2123,32 +2624,56 @@ class App {
     this.eqCanvas.render();
   }
 
-  _doMerge() {
+  _computeBlendedBands() {
     const selectedBands = this._getSelectedBands();
-    if (!selectedBands.length) return;
+    if (!selectedBands.length) return null;
 
-    // Apply blend scaling to each band's gain (blend from the band's preset)
+    const gb = state.globalBlend !== undefined ? state.globalBlend : 1.0;
+
     const blendedBands = selectedBands.map(b => {
       const presetIdx = b.presetIndex;
-      const blend = (presetIdx !== undefined && state.blends[presetIdx] !== undefined)
+      const enabled = (presetIdx !== undefined && state.enables[presetIdx] !== false);
+      const individualBlend = (presetIdx !== undefined && state.blends[presetIdx] !== undefined)
         ? state.blends[presetIdx] : 1.0;
-      // For gainless shapes (cuts, notch, bandpass), blend controls inclusion only
+      const effectiveBlend = enabled ? individualBlend * gb : 0;
       const gainless = b.shape === 2 || b.shape === 4 || b.shape === 5 || b.shape === 6;
       return {
         ...b,
-        gain: gainless ? b.gain : b.gain * blend,
-        // If blend is 0, exclude the band entirely (will be filtered below)
-        _blendExclude: blend < 0.005,
+        gain: gainless ? b.gain : b.gain * effectiveBlend,
+        _blendExclude: effectiveBlend < 0.005,
       };
     }).filter(b => !b._blendExclude);
 
-    if (!blendedBands.length) {
+    if (!blendedBands.length) return null;
+    return [...blendedBands].sort((a, b) => a.frequency - b.frequency);
+  }
+
+  _buildPreview() {
+    const sorted = this._computeBlendedBands();
+    if (!sorted) {
       this.toast('All bands are at 0% blend — nothing to merge', 'error');
       return;
     }
 
-    // Sort by frequency
-    const sorted = [...blendedBands].sort((a, b) => a.frequency - b.frequency);
+    HistoryManager.push();
+    state.mergedPreview = sorted;
+    this._updateDownloadBtn();
+
+    // Switch to tabs view with Preview tab active
+    if (state.viewMode === 'overlay') {
+      document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+      document.querySelector('.view-toggle button[data-view="tabs"]').classList.add('active');
+      state.viewMode = 'tabs';
+    }
+    state.activeTab = -1; // Merged/Preview tab
+    this._updateTabBar();
+    this.eqCanvas.render();
+    this.toast(`Preview: ${sorted.length} bands — click "Download Preset(s)" to export`, 'success');
+  }
+
+  _doDownload() {
+    const sorted = state.mergedPreview;
+    if (!sorted || !sorted.length) return;
 
     const charSel = document.getElementById('characterSelect');
     const globals = { ...state.presets[state.globalsSource].globals };
@@ -2158,14 +2683,12 @@ class App {
       description: `Merged preset from ${state.presets.filter(Boolean).map(p => p.name).join(', ')}`,
     };
 
-    // Split into chunks of 24
     const chunks = [];
     for (let i = 0; i < sorted.length; i += MAX_BANDS) {
       chunks.push(sorted.slice(i, i + MAX_BANDS));
     }
 
     const files = chunks.map((chunk, ci) => {
-      // Create full 24-band array
       const allBands = [];
       for (let i = 0; i < MAX_BANDS; i++) {
         if (i < chunk.length) {
@@ -2180,7 +2703,6 @@ class App {
       return { name: name + '.ffp', content };
     });
 
-    // Download
     if (files.length === 1) {
       this._downloadFile(files[0].name, files[0].content);
       this.toast(`Exported "${files[0].name}" with ${sorted.length} bands`, 'success');
