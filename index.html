@@ -209,13 +209,14 @@ canvas{display:block;width:100%;height:100%}
 /* ── Preset Slots ── */
 .preset-slots{display:grid;grid-template-columns:1fr 1fr;gap:5px;overflow-y:auto;flex:1;padding:2px 0;align-content:start}
 .preset-slot{
-  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  display:flex;flex-direction:column;gap:5px;padding:8px 10px;
   background:var(--bg-deep);border-radius:var(--radius-sm);
   border:1px dashed var(--border-light);
   transition:all 0.2s;min-height:42px;position:relative;
 }
 .preset-slot.has-file{border-style:solid;border-color:var(--border)}
 .preset-slot.drag-over{border-color:var(--accent);background:var(--accent-dim)}
+.slot-top{display:flex;align-items:center;gap:8px;width:100%}
 .preset-slot .color-dot{
   width:10px;height:10px;border-radius:50%;flex-shrink:0;
   box-shadow:0 0 6px currentColor;
@@ -228,11 +229,29 @@ canvas{display:block;width:100%;height:100%}
   width:20px;height:20px;border-radius:4px;background:none;
   border:none;color:var(--text-dim);cursor:pointer;font-size:12px;
   display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:all 0.15s;
+  opacity:0;transition:all 0.15s;flex-shrink:0;
 }
 .preset-slot:hover .slot-remove{opacity:1}
 .preset-slot .slot-remove:hover{color:var(--red)}
 .preset-slot input[type="file"]{display:none}
+/* Blend row */
+.blend-row{
+  display:flex;align-items:center;gap:6px;width:100%;
+  padding-top:2px;
+  border-top:1px solid rgba(255,255,255,0.05);
+}
+.blend-label{font-size:9px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;width:26px}
+.blend-slider{
+  flex:1;-webkit-appearance:none;appearance:none;height:3px;
+  border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(to right, var(--slot-color,var(--accent)) var(--blend-pct,100%), rgba(255,255,255,0.08) var(--blend-pct,100%));
+}
+.blend-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:11px;height:11px;border-radius:50%;
+  background:var(--slot-color,var(--accent));cursor:pointer;
+  border:2px solid var(--bg-panel);box-shadow:0 0 5px var(--slot-color,var(--accent));
+}
+.blend-value{font-size:9px;font-family:var(--mono);color:var(--text-muted);min-width:26px;text-align:right;flex-shrink:0}
 .slot-actions{display:flex;gap:4px;margin-top:6px}
 .slot-actions button{
   padding:4px 10px;font-size:11px;font-weight:500;
@@ -937,6 +956,7 @@ const FilterMath = {
 // ════════════════════════════════════════════
 const state = {
   presets: [],
+  blends: [], // per-preset blend 0.0–1.0
   slotCount: 2,
   viewMode: 'overlay', // 'overlay' | 'tabs'
   activeTab: 0,
@@ -1297,19 +1317,21 @@ class EQCanvas {
     // ── Phase 1: Draw individual band response curves (translucent fills) ──
     for (const { preset, idx } of visiblePresets) {
       const presetColor = preset.color || PRESET_COLORS[idx % PRESET_COLORS.length];
+      const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
 
       for (let bi = 0; bi < preset.bands.length; bi++) {
         const b = preset.bands[bi];
         if (!b.used && !b.selected && !FFP.isNonDefault(b)) continue;
         if (!b.enabled && b.used) continue; // bypassed bands not drawn
 
-        const response = freqPoints.map(f => FilterMath.bandResponse(f, b));
+        // Scale response by blend for visual representation
+        const response = freqPoints.map(f => FilterMath.bandResponse(f, b) * blend);
         const hasSignal = response.some(r => Math.abs(r) > 0.05);
-        if (!hasSignal) continue;
+        if (!hasSignal && blend > 0.02) continue;
 
         const isActive = b.used || b.selected;
-        const fillAlpha = isActive ? 0.22 : 0.08;
-        const strokeAlpha = isActive ? 0.5 : 0.15;
+        const fillAlpha = (isActive ? 0.22 : 0.08) * blend;
+        const strokeAlpha = (isActive ? 0.5 : 0.15) * blend;
 
         // Parse color to get rgba values
         const fillColor = this._hexToRgba(presetColor, fillAlpha);
@@ -1341,19 +1363,21 @@ class EQCanvas {
       }
     }
 
-    // ── Phase 2: Draw composite response per preset (colored stroke) ──
+    // ── Phase 2: Draw composite response per preset (colored stroke, blend-scaled) ──
     for (const { preset, idx } of visiblePresets) {
       const color = preset.color || PRESET_COLORS[idx % PRESET_COLORS.length];
+      const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
       const activeBands = preset.bands.filter(b => (b.used || b.selected) && b.enabled);
       if (!activeBands.length) continue;
 
-      const composite = freqPoints.map(f => FilterMath.compositeResponse(f, activeBands));
+      const composite = freqPoints.map(f => FilterMath.compositeResponse(f, activeBands) * blend);
 
       ctx.save();
       ctx.shadowColor = color;
-      ctx.shadowBlur = 5;
+      ctx.shadowBlur = 5 * blend;
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.3 + 0.7 * blend;
       ctx.beginPath();
       for (let i = 0; i <= numPoints; i++) {
         const x = this._freqToX(freqPoints[i]);
@@ -1364,16 +1388,22 @@ class EQCanvas {
       ctx.restore();
     }
 
-    // ── Phase 3: Draw overall composite (gold line) when multiple presets ──
+    // ── Phase 3: Draw overall composite (gold line) when multiple presets — blend-weighted ──
     if (visiblePresets.length > 1) {
-      const allActiveBands = [];
-      for (const { preset } of visiblePresets) {
-        for (const b of preset.bands) {
-          if ((b.used || b.selected) && b.enabled) allActiveBands.push(b);
+      const totalComposite = freqPoints.map(f => {
+        let sum = 0;
+        for (const { preset, idx } of visiblePresets) {
+          const blend = state.blends[idx] !== undefined ? state.blends[idx] : 1.0;
+          for (const b of preset.bands) {
+            if ((b.used || b.selected) && b.enabled) {
+              sum += FilterMath.bandResponse(f, b) * blend;
+            }
+          }
         }
-      }
-      if (allActiveBands.length) {
-        const totalComposite = freqPoints.map(f => FilterMath.compositeResponse(f, allActiveBands));
+        return sum;
+      });
+      const hasComposite = totalComposite.some(v => Math.abs(v) > 0.05);
+      if (hasComposite) {
         ctx.save();
         ctx.shadowColor = '#ffca1f';
         ctx.shadowBlur = 8;
@@ -1588,21 +1618,36 @@ class App {
       slot.className = 'preset-slot' + (state.presets[i] ? ' has-file' : '');
       const color = PRESET_COLORS[i % PRESET_COLORS.length];
       const preset = state.presets[i];
+      // Ensure blend exists
+      if (state.blends[i] === undefined) state.blends[i] = 1.0;
+      const blend = state.blends[i];
 
       if (preset) {
         slot.innerHTML = `
-          <span class="color-dot" style="color:${color};background:${color}"></span>
-          <div class="slot-info">
-            <div class="slot-name">${preset.name}</div>
-            <div class="slot-bands">${preset.bands.filter(b=>b.used).length} active bands${preset.bands.filter(b=>!b.used&&FFP.isNonDefault(b)).length ? ' + ' + preset.bands.filter(b=>!b.used&&FFP.isNonDefault(b)).length + ' inactive configured' : ''}</div>
+          <div class="slot-top">
+            <span class="color-dot" style="color:${color};background:${color}"></span>
+            <div class="slot-info">
+              <div class="slot-name">${preset.name}</div>
+              <div class="slot-bands">${preset.bands.filter(b=>b.used).length} active bands${preset.bands.filter(b=>!b.used&&FFP.isNonDefault(b)).length ? ' + ' + preset.bands.filter(b=>!b.used&&FFP.isNonDefault(b)).length + ' inactive configured' : ''}</div>
+            </div>
+            <button class="slot-remove" data-idx="${i}" title="Remove">&times;</button>
           </div>
-          <button class="slot-remove" data-idx="${i}" title="Remove">&times;</button>
+          <div class="blend-row">
+            <span class="blend-label">Mix</span>
+            <input type="range" class="blend-slider" min="0" max="1" step="0.01"
+              value="${blend}"
+              style="--slot-color:${color};--blend-pct:${blend * 100}%"
+              data-idx="${i}">
+            <span class="blend-value" data-blend-display="${i}">${Math.round(blend * 100)}%</span>
+          </div>
         `;
       } else {
         slot.innerHTML = `
-          <span class="color-dot" style="color:${color};background:${color};opacity:0.3"></span>
-          <div class="slot-info">
-            <div class="slot-placeholder">Drop .ffp file or click to browse</div>
+          <div class="slot-top">
+            <span class="color-dot" style="color:${color};background:${color};opacity:0.3"></span>
+            <div class="slot-info">
+              <div class="slot-placeholder">Drop .ffp file or click to browse</div>
+            </div>
           </div>
         `;
       }
@@ -1614,10 +1659,28 @@ class App {
       fileInput.addEventListener('change', e => this._handleFile(e.target.files[0], parseInt(e.target.dataset.idx)));
       slot.appendChild(fileInput);
 
-      // Click to browse (when no file)
+      // Click to browse (when no file) — only on the slot-top area
       if (!preset) {
         slot.addEventListener('click', () => fileInput.click());
         slot.style.cursor = 'pointer';
+      }
+
+      // Blend slider
+      const blendSlider = slot.querySelector('.blend-slider');
+      if (blendSlider) {
+        blendSlider.addEventListener('input', e => {
+          e.stopPropagation();
+          const idx = parseInt(e.target.dataset.idx);
+          const v = parseFloat(e.target.value);
+          state.blends[idx] = v;
+          e.target.style.setProperty('--blend-pct', (v * 100) + '%');
+          const display = slot.querySelector(`[data-blend-display="${idx}"]`);
+          if (display) display.textContent = Math.round(v * 100) + '%';
+          this.eqCanvas.render();
+          this.updateBandSummary();
+        });
+        blendSlider.addEventListener('click', e => e.stopPropagation());
+        blendSlider.addEventListener('mousedown', e => e.stopPropagation());
       }
 
       // Remove button
@@ -1625,6 +1688,7 @@ class App {
         e.stopPropagation();
         const idx = parseInt(e.currentTarget.dataset.idx);
         state.presets.splice(idx, 1);
+        state.blends.splice(idx, 1);
         state.slotCount = Math.max(state.slotCount, 2);
         if (state.slotCount > state.presets.length && state.slotCount > 2) {
           state.slotCount = Math.max(state.presets.length + 1, 2);
@@ -2063,8 +2127,28 @@ class App {
     const selectedBands = this._getSelectedBands();
     if (!selectedBands.length) return;
 
+    // Apply blend scaling to each band's gain (blend from the band's preset)
+    const blendedBands = selectedBands.map(b => {
+      const presetIdx = b.presetIndex;
+      const blend = (presetIdx !== undefined && state.blends[presetIdx] !== undefined)
+        ? state.blends[presetIdx] : 1.0;
+      // For gainless shapes (cuts, notch, bandpass), blend controls inclusion only
+      const gainless = b.shape === 2 || b.shape === 4 || b.shape === 5 || b.shape === 6;
+      return {
+        ...b,
+        gain: gainless ? b.gain : b.gain * blend,
+        // If blend is 0, exclude the band entirely (will be filtered below)
+        _blendExclude: blend < 0.005,
+      };
+    }).filter(b => !b._blendExclude);
+
+    if (!blendedBands.length) {
+      this.toast('All bands are at 0% blend — nothing to merge', 'error');
+      return;
+    }
+
     // Sort by frequency
-    const sorted = [...selectedBands].sort((a, b) => a.frequency - b.frequency);
+    const sorted = [...blendedBands].sort((a, b) => a.frequency - b.frequency);
 
     const charSel = document.getElementById('characterSelect');
     const globals = { ...state.presets[state.globalsSource].globals };
