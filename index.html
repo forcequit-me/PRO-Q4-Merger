@@ -697,6 +697,7 @@ canvas{display:block;width:100%;height:100%}
       <div class="panel-title">
         <span>Input Presets</span>
         <div class="slot-actions">
+          <button class="add-btn" id="demoBtn" title="Load two example presets to try merging">Try Demo</button>
           <button class="add-btn" id="addSlotBtn" title="Add preset slot">+ Add</button>
         </div>
       </div>
@@ -2030,6 +2031,27 @@ class App {
     document.getElementById('addSlotBtn').addEventListener('click', () => {
       state.slotCount++;
       this._renderSlots();
+    });
+
+    document.getElementById('demoBtn').addEventListener('click', async () => {
+      const demos = ['Merge Test Part 1.ffp', 'Merge Test Part 2.ffp'];
+      try {
+        HistoryManager.push();
+        for (let i = 0; i < demos.length; i++) {
+          const res = await fetch(encodeURI('Merge Test Presets/' + demos[i]));
+          if (!res.ok) throw new Error('Could not load demo presets');
+          const preset = FFP.parse(await res.text(), demos[i]);
+          preset.color = PRESET_COLORS[i % PRESET_COLORS.length];
+          preset.bands.forEach(b => { b.presetIndex = i; });
+          state.presets[i] = preset;
+        }
+        state.slotCount = Math.max(state.slotCount, demos.length);
+        state.mergedPreview = null;
+        this._onPresetsChanged();
+        this.toast('Loaded 2 demo presets — hit Preview Merge to try it', 'success');
+      } catch (err) {
+        this.toast(err.message, 'error');
+      }
     });
 
     // Band editor close

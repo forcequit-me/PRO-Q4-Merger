@@ -8,6 +8,8 @@ A browser-based tool for merging, blending, and editing FabFilter Pro-Q 4 equali
 2. **Load presets** by dragging `.ffp` files onto the preset slots, or click a slot to browse.
 3. That's it — your EQ curves appear immediately on the interactive display.
 
+No presets handy? Click **Try Demo** to load two example presets and see a merge in action.
+
 > **Note:** This tool works with **Pro-Q 4** format presets only. If you have Pro-Q 3 presets, open them in Pro-Q 4 and re-save to convert them to the compatible format.
 
 ## Where to Find Your Presets
