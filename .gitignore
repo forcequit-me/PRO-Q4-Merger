@@ -1,5 +1,8 @@
 node_modules/
 .kilocode/
+.claude/
+.agents/
+skills-lock.json
 .DS_Store
 Thumbs.db
 *.log
