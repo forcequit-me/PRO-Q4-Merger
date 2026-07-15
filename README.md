@@ -2,6 +2,8 @@
 
 A browser-based tool for merging, blending, and editing FabFilter Pro-Q 4 equalizer presets. Load multiple `.ffp` preset files, visually compare their EQ curves, adjust individual band parameters, and export merged results — all without installing anything.
 
+https://pro-q4-merger.pages.dev/
+
 ## Getting Started
 
 1. **Open `index.html`** in any modern browser (Chrome, Firefox, Edge, Safari).
